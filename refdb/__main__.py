@@ -2,7 +2,7 @@
    python -m refdb stats [--db ...]"""
 import argparse
 
-from . import crawled, downloads, mediawiki
+from . import crawled, downloads, mediawiki, wikipedia
 from .sources import SOURCES
 from .store import connect
 
@@ -29,6 +29,8 @@ def main() -> None:
         if s.kind == "mediawiki":
             pages, records = mediawiki.collect(db, s, a.limit, a.interval)
             print(f"{sid}: {pages} pages, {records} records")
+        elif s.kind == "wikipedia":
+            print(f"{sid}: {wikipedia.collect(db, s)} rows")
         elif s.kind == "crawl":
             print(f"{sid}: {crawled.collect(db, s)} records")
         else:
