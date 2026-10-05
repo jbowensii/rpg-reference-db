@@ -1,0 +1,2 @@
+mwparserfromhell>=0.7
+httpx>=0.27
