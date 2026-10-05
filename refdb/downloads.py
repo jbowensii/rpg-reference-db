@@ -144,3 +144,30 @@ def collect_wikidata(db, source) -> int:
         rows += 1
     db.commit()
     return rows
+
+
+def collect_isfdb(db, source) -> int:
+    """Rows of isfdb_game_pubs.tsv, exported from the ISFDB MySQL backup with refdb/isfdb_export.sql
+    (the dump needs a free ISFDB login, so it is downloaded by hand; see README). CC BY 4.0."""
+    import csv
+    import os
+    from pathlib import Path
+    save_source(db, source)
+    path = Path(os.environ.get("REFDB_CRAWL_ROOT", "/scraper")) / "isfdb" / "isfdb_game_pubs.tsv"
+    if not path.exists():
+        print(f"isfdb: {path} not found - export it first (refdb/isfdb_export.sql); skipped")
+        return 0
+    csv.field_size_limit(10_000_000)
+    rows = 0
+    with path.open(encoding="utf-8", errors="replace", newline="") as f:
+        for r in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
+            r = {k: (None if v in ("NULL", "") else v.replace("\t", "\t").replace("\n", " ")) for k, v in r.items()}
+            save(db, source.id, r["pub_id"], f"https://www.isfdb.org/cgi-bin/pl.cgi?{r['pub_tag'] or r['pub_id']}",
+                 "", _now(), "", {
+                     "title": r["pub_title"], "publisher": r["publisher_name"], "author": r["authors"],
+                     "year": (r["pub_year"] or "")[:4] if (r["pub_year"] or "0000")[:4] != "0000" else None,
+                     "isbn": r["pub_isbn"], "code": r["pub_catalog"], "pages": r["pub_pages"],
+                     "product_type": r["pub_ctype"], "fields": r})
+            rows += 1
+    db.commit()
+    return rows

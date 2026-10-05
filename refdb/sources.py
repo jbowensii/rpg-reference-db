@@ -43,6 +43,8 @@ SOURCES = {s.id: s for s in [
            "Wikipedia contributors, en.wikipedia.org", True, "https://en.wikipedia.org/w/api.php", kind="wikipedia"),
     Source("wikidata", "Wikidata", "https://www.wikidata.org/", "CC0 1.0", "Wikidata contributors, wikidata.org",
            True, "https://query.wikidata.org/sparql", kind="wikidata"),
+    Source("isfdb", "ISFDB - Internet Speculative Fiction Database", "https://www.isfdb.org/", "CC BY 4.0",
+           "ISFDB, isfdb.org", True, "", kind="isfdb"),
     # publish=False until permission: Kim asks to be emailed first; the other two have no licence.
     Source("kim", "John H. Kim's RPG Encyclopedia", "https://www.darkshire.net/jhkim/rpg/encyclopedia/",
            "Reuse with credit + link + notice to the author", "John H. Kim (J. Hanju Kim), darkshire.net",
