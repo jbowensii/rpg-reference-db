@@ -54,6 +54,9 @@ SOURCES = {s.id: s for s in [
     Source("traveller", "Traveller Wiki", "https://wiki.travellerrpg.com/", "Traveller copyright; ask",
            "Traveller Wiki contributors, wiki.travellerrpg.com", False,
            "https://wiki.travellerrpg.com/api.php", kind="traveller"),
+    Source("rpgnet", "RPGnet Gaming Index (via the Wayback Machine)", "https://index.rpg.net/",
+           "(c) Dyvers Hands, all rights reserved", "RPGnet Gaming Index, index.rpg.net; Internet Archive",
+           False, "", kind="rpgnet"),
     # Crawled with scraper-stack: `api` = the job folder, `template` = the page parser.
     Source("waynesbooks", "Wayne's Books RPG Reference", "http://www.waynesbooks.com/",
            "Copyright Waynes World of Books; ask", "Wayne's Books RPG Reference, waynesbooks.com", False,
