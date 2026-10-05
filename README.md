@@ -10,22 +10,35 @@ built to identify game books, for example in
 [book_sorter](https://github.com/jbowensii/book_sorter), and to be useful to anyone cataloguing
 RPG collections.
 
-> Status: collector under construction. The first public release will be published under
-> [Releases](../../releases) once the wiki sources are collected and checked.
+> Status: collecting. About 24,000 product records from the open sources so far; the first public
+> release will be published under [Releases](../../releases) once the remaining sources are in and
+> the records are merged and checked.
 
 ## Sources and credits
 
-| Source | What it gives | Licence | In the public release |
-|---|---|---|---|
-| [Sarna.net BattleTechWiki](https://www.sarna.net/wiki/) | FASA / FanPro / Catalyst BattleTech products: production codes, ISBNs, pages | GNU FDL 1.2 | yes |
-| [White Wolf Wiki](https://whitewolf.fandom.com/) | White Wolf / Onyx Path books: WW numbers, ISBNs | CC BY-SA 3.0 | yes |
-| [Forgotten Realms Wiki](https://forgottenrealms.fandom.com/) | TSR / WotC Forgotten Realms books: codes, ISBNs | CC BY-SA 3.0 | yes |
-| [Wookieepedia](https://starwars.fandom.com/) | Star Wars reference and RPG books | CC BY-SA 3.0 | yes |
-| [Memory Beta](https://memory-beta.fandom.com/) | Star Trek books, including FASA RPG stock numbers | CC BY-SA 3.0 | yes |
+Thank you to every editor of these wikis, databases and indexes. Every record names its source.
 
-More sources are being added: Wikipedia product lists, Wikidata, ISFDB, Open Library, the
-Traveller wiki, Kim's RPG Encyclopedia and more. The full plan, with each source's licence, is in
-`SOURCES.md` (coming with the first release). Thank you to every editor of these wikis and indexes.
+| Source | What it gives | Licence | Public release |
+|---|---|---|---|
+| [Wikipedia](https://en.wikipedia.org/) RPG product lists | D&D, Shadowrun, Pathfinder, World of Darkness, BattleTech, Fighting Fantasy and more: codes, ISBNs, authors, years | CC BY-SA 4.0 | yes |
+| [Sarna.net BattleTechWiki](https://www.sarna.net/wiki/) | FASA / FanPro / Catalyst BattleTech: production codes, ISBNs, pages | GNU FDL 1.2 | yes |
+| [White Wolf Wiki](https://whitewolf.fandom.com/) | White Wolf / Onyx Path: WW numbers, ISBNs | CC BY-SA 3.0 | yes |
+| [Forgotten Realms Wiki](https://forgottenrealms.fandom.com/) | TSR / WotC Forgotten Realms: codes, ISBNs | CC BY-SA 3.0 | yes |
+| [Wookieepedia](https://starwars.fandom.com/) | Star Wars reference and RPG books | CC BY-SA 3.0 | yes |
+| [Memory Beta](https://memory-beta.fandom.com/) | Star Trek books incl. FASA RPG stock numbers | CC BY-SA 3.0 | yes |
+| [Wikidata](https://www.wikidata.org/) | ~3.7k games, supplements, adventures; cross-links between catalogues | CC0 | yes |
+| [ISFDB](https://www.isfdb.org/) | Game-world fiction (Black Library, TSR/WotC, BattleTech, Star Wars, Star Trek...) | CC BY 4.0 | yes |
+| [Open Library](https://openlibrary.org/) | Editions from game publishers: ISBNs, dates, pages | CC0 | yes |
+| [John H. Kim's RPG Encyclopedia](https://www.darkshire.net/jhkim/rpg/encyclopedia/) | ~2,000 game-system editions | reuse with credit, link and notice | after notice |
+| [Traveller Wiki](https://wiki.travellerrpg.com/) | 1,334 Traveller products, all publishers | no open licence | asking |
+| [TTRPG Wiki](https://ttrpgwiki.com/) | ~300 current game systems | none stated | asking |
+| [The TSR Archive](http://www.tsrarchive.com/) | TSR item codes, formats, years | none stated | asking |
+| [Wayne's Books RPG Reference](http://www.waynesbooks.com/) | Print-era products: stock codes, ISBNs, pages | copyright | asking |
+| RPGnet Gaming Index (via the Internet Archive) | Editions, stock numbers, ISBNs | (c) Dyvers Hands | no (private) |
+| Le GRoG | French and English editions, ISBNs, pages | EU database right | no (private) |
+
+"Asking" means the owner is being asked for permission; until then those records are used
+privately for matching and are not in the release.
 
 ## What is deliberately NOT in the public release
 
