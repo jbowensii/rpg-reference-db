@@ -58,3 +58,12 @@ def save(db: sqlite3.Connection, source: str, key: str, url: str, revision: str,
                f"VALUES (?,?,?,{','.join('?' * len(COLUMNS))},?)",
                (source, key, url, *(record.get(c) for c in COLUMNS),
                 json.dumps(record.get("fields") or {}, ensure_ascii=False)))
+
+
+def write_status(source: str, **info) -> None:
+    """data/<source>.status.json: progress of long jobs, readable over the network share."""
+    import datetime as dt
+    p = Path("data") / f"{source}.status.json"
+    p.parent.mkdir(exist_ok=True)
+    info["updated"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    p.write_text(json.dumps(info), encoding="utf-8")

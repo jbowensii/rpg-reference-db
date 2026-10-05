@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlsplit
 import httpx
 
 from .mediawiki import UA
-from .store import save, save_raw, save_source
+from .store import save, save_raw, save_source, write_status
 
 CDX = "http://web.archive.org/cdx/search/cdx"
 WAYBACK = "http://web.archive.org/web/{ts}id_/{url}"
@@ -119,6 +119,7 @@ def collect(db, source, limit: int = 0, interval: float = 1.5) -> int:
     done = {r[0] for r in db.execute("SELECT key FROM raw WHERE source = ?", (source.id,))}
     todo = [(k, v) for k, v in sorted(caps.items()) if k not in done]
     print(f"rpgnet: {len(caps)} pages captured, {len(done)} already fetched, {len(todo)} to fetch")
+    write_status("rpgnet", done=False, fetched=0, to_fetch=len(todo), captured=len(caps), records=0)
     if limit:
         todo = todo[:limit]
     rows = 0
@@ -140,5 +141,7 @@ def collect(db, source, limit: int = 0, interval: float = 1.5) -> int:
         if n % 100 == 0:
             db.commit()
             print(f"rpgnet: {n}/{len(todo)} fetched, {rows} records")
+            write_status("rpgnet", done=False, fetched=n, to_fetch=len(todo), captured=len(caps), records=rows)
     db.commit()
+    write_status("rpgnet", done=True, fetched=len(todo), to_fetch=len(todo), captured=len(caps), records=rows)
     return rows

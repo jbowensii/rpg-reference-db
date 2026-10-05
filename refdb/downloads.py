@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 import httpx
 
 from .mediawiki import UA
-from .store import save, save_raw, save_source, save_system
+from .store import save, save_raw, save_source, save_system, write_status
 
 
 def _now() -> str:
@@ -200,6 +200,7 @@ def collect_openlibrary(db, source) -> int:
                 if seen % 2_000_000 == 0:
                     db.commit()
                     print(f"openlibrary: {seen:,} editions read, {rows:,} kept")
+                    write_status("openlibrary", done=False, read=seen, kept=rows)
                 parts = line.split("\t", 4)
                 if len(parts) < 5 or not (GAME_PUBLISHERS.search(parts[4]) or GAME_SUBJECTS.search(parts[4])):
                     continue
@@ -218,6 +219,7 @@ def collect_openlibrary(db, source) -> int:
                     "product_type": e.get("physical_format"), "fields": e})
                 rows += 1
     db.commit()
+    write_status("openlibrary", done=True, read=seen, kept=rows)
     return rows
 
 
