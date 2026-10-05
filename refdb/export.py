@@ -25,15 +25,16 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
     rel.executescript(f"""
       CREATE TABLE products ({', '.join(c + (' INTEGER PRIMARY KEY' if c == 'id' else ' TEXT') for c in PRODUCT_COLS)});
       CREATE TABLE product_records (product_id INTEGER, source TEXT, key TEXT, url TEXT);
-      CREATE TABLE sources (id TEXT PRIMARY KEY, name TEXT, url TEXT, licence TEXT, credit TEXT);
+      CREATE TABLE sources (id TEXT PRIMARY KEY, name TEXT, url TEXT, licence TEXT, credit TEXT,
+                            owner TEXT, contact TEXT);
     """)
     products = db.execute(f"SELECT {', '.join(PRODUCT_COLS)} FROM public_products").fetchall()
     links = db.execute("SELECT product_id, source, key, url FROM public_product_records").fetchall()
     assert all(src in public for _, src, _, _ in links), "a private source reached the release"
     rel.executemany(f"INSERT INTO products VALUES ({','.join('?' * len(PRODUCT_COLS))})", products)
     rel.executemany("INSERT INTO product_records VALUES (?,?,?,?)", links)
-    rel.executemany("INSERT INTO sources VALUES (?,?,?,?,?)",
-                    [(s.id, s.name, s.url, s.licence, s.credit) for s in public.values()])
+    rel.executemany("INSERT INTO sources VALUES (?,?,?,?,?,?,?)",
+                    [(s.id, s.name, s.url, s.licence, s.credit, s.owner, s.contact) for s in public.values()])
     rel.commit()
     rel.close()
 
@@ -43,10 +44,34 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
         w.writerows(products)
 
     used = sorted({src for _, src, _, _ in links})
-    lines = ["# Credits", "", f"Release {stamp}: {len(products):,} products from {len(used)} sources.", "",
-             "| Source | Licence | Credit |", "|---|---|---|"]
-    lines += [f"| [{public[s].name}]({public[s].url}) | {public[s].licence} | {public[s].credit} |" for s in used]
-    lines += ["", "Records from share-alike sources (CC BY-SA, GFDL) keep those terms: reuse them under the same",
-              "licence and credit the source. Each record links back to its source page (product_records.url)."]
-    (out / "CREDITS.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "CREDITS.md").write_text(credits_md(stamp, len(products), used), encoding="utf-8")
+    root = Path(__file__).resolve().parent.parent
+    for name in ("LICENSE", "LICENSE-DATA.md"):          # the licences travel with every release
+        if (root / name).exists():
+            (out / name).write_text((root / name).read_text(encoding="utf-8"), encoding="utf-8")
     return target
+
+
+def _contact(c: str) -> str:
+    return f"[{c}](mailto:{c})" if "@" in c and not c.startswith("http") else (f"<{c}>" if c else "")
+
+
+def credits_md(stamp: str, n_products: int, used: list[str]) -> str:
+    """Thanks to every source: those in this release, and those used privately for matching."""
+    lines = ["# Credits and thanks", "",
+             f"Release {stamp}: {n_products:,} products from {len(used)} sources. Thank you to everyone",
+             "who built and maintains these sources. Every record links back to its source page",
+             "(`product_records.url`). Data licence: CC BY-SA 4.0 (see LICENSE-DATA.md).", "",
+             "## Sources in this release", "",
+             "| Source | Made by | Contact | Licence |", "|---|---|---|---|"]
+    for sid in used:
+        s = SOURCES[sid]
+        lines.append(f"| [{s.name}]({s.url}) | {s.owner or s.credit} | {_contact(s.contact)} | {s.licence} |")
+    private = [s for s in SOURCES.values() if not s.publish]
+    if private:
+        lines += ["", "## Also with thanks", "",
+                  "These sources helped identify books privately. None of their data is in this release",
+                  "(their owners have not agreed to republication, or their terms don't allow it).", "",
+                  "| Source | Made by | Contact |", "|---|---|---|"]
+        lines += [f"| [{s.name}]({s.url}) | {s.owner or s.credit} | {_contact(s.contact)} |" for s in private]
+    return "\n".join(lines) + "\n"

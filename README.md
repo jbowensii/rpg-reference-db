@@ -52,10 +52,13 @@ privately for matching and are not in the release.
 
 ## Licence
 
-- **Code** (`refdb/`, tests): MIT, see `LICENSE`.
-- **Data**: each record keeps its source's licence. Share-alike sources (CC BY-SA, GFDL) keep
-  their terms, so reuse their records under the same licence and credit the source as listed
-  above. The release notes for each version state exactly which licences apply.
+- **Code** (`refdb/`, `tests/`): **MIT**, see `LICENSE`.
+- **Data** (the released database and CSV): **CC BY-SA 4.0**, see `LICENSE-DATA.md`. The wiki
+  sources are share-alike, so the combined data must be too; the CC0 and CC BY sources fit inside
+  it. Values from Sarna.net stay under the GNU FDL 1.2 (marked per product).
+- **Credits**: every release ships `CREDITS.md`, listing each source, who makes it, how to contact
+  them and its licence, and thanking the sources used privately. Contacts are only the ones the
+  owners publish themselves.
 
 ## Running the collector
 

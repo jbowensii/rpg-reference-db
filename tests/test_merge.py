@@ -32,3 +32,14 @@ def test_merge_links_by_isbn_code_and_title() -> None:
     # public merge leaves private sources (rpgnet, waynesbooks, tsrarchive) out entirely
     assert merge(db, public=True) == 1
     assert db.execute("SELECT sources FROM public_products").fetchone()[0] == "wikipedia"
+
+
+def test_credits_name_every_source() -> None:
+    from refdb.export import credits_md
+    from refdb.sources import SOURCES
+    md = credits_md("2026-10-05", 10, ["wikipedia", "isfdb"])
+    assert "Wikipedia contributors (Wikimedia Foundation)" in md and "ISFDB editors" in md
+    assert "CC BY-SA 4.0" in md
+    for s in SOURCES.values():
+        if not s.publish:
+            assert s.name in md                     # thanked even though their data is not released
