@@ -35,9 +35,14 @@ def save_source(db: sqlite3.Connection, s) -> None:
                (s.id, s.name, s.url, s.licence, s.credit, int(s.publish)))
 
 
+def save_raw(db: sqlite3.Connection, source: str, key: str, url: str, revision: str, fetched_at: str,
+             body: str) -> None:
+    db.execute("INSERT OR REPLACE INTO raw VALUES (?,?,?,?,?,?)", (source, key, url, revision, fetched_at, body))
+
+
 def save(db: sqlite3.Connection, source: str, key: str, url: str, revision: str, fetched_at: str,
          body: str, record: dict) -> None:
-    db.execute("INSERT OR REPLACE INTO raw VALUES (?,?,?,?,?,?)", (source, key, url, revision, fetched_at, body))
+    save_raw(db, source, key, url, revision, fetched_at, body)
     db.execute(f"INSERT OR REPLACE INTO records (source, key, url, {', '.join(COLUMNS)}, fields) "
                f"VALUES (?,?,?,{','.join('?' * len(COLUMNS))},?)",
                (source, key, url, *(record.get(c) for c in COLUMNS),

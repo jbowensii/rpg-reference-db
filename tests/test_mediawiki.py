@@ -37,3 +37,21 @@ def test_template_name_normalised_and_missing() -> None:
                          "InfoBoxProduct")["code"] == "1600"
     assert parse_infobox("{{Infobox_Product |year=1985}}", "Infobox Product")["year"] == "1985"
     assert parse_infobox("no box here", "Book") is None
+
+
+def test_box_found_despite_broken_markup_elsewhere() -> None:
+    # Forgotten Realms pages: broken markup later on the page hid the whole infobox from the parser.
+    text = ("{{Book\n| code = 8548 (hardcover) <br /> 8548P (paperback)\n| author = [[Ed Greenwood]]\n}}\n"
+            "Text {{yearlink|1994 and an unclosed template '' {{refs")
+    rec = parse_infobox(text, "Book")
+    assert rec["code"] == "8548 (hardcover) 8548P (paperback)" and rec["author"] == "Ed Greenwood"
+    assert parse_infobox("{{Book/subsection | title = X}}", "Book") is None      # a different template
+
+
+def test_unbalanced_italics_and_numbered_editions() -> None:
+    text = ("{{Book\n| caption = Cover of ''Elminster'.'\n| code = 8548\n| publisher = [[TSR, Inc.]]\n"
+            "| released1 = December 1994\n| pages1 = 320\n| isbn10-1 = 1-5607-6936-X\n"
+            "| followed_by = Elminster in Myth Drannor''\n}}")
+    rec = parse_infobox(text, "Book")
+    assert rec["code"] == "8548" and rec["publisher"] == "TSR, Inc."
+    assert rec["year"] == "December 1994" and rec["pages"] == "320" and rec["isbn"] == "1-5607-6936-X"

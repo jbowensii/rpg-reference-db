@@ -45,10 +45,34 @@ def _text(value) -> str:
     return re.sub(r"\s+", " ", mwparserfromhell.parse(s).strip_code()).strip()
 
 
+def _template_block(wikitext: str, template: str) -> str | None:
+    """The text of the first {{template ...}}, found by counting braces."""
+    name = r"[\s_]*".join(re.escape(w) for w in re.split(r"[\s_]+", template.strip()))
+    m = re.search(r"\{\{\s*" + name + r"\s*(?=[|}\n])", wikitext, re.I)
+    if not m:
+        return None
+    depth, i = 0, m.start()
+    while i < len(wikitext) - 1:
+        pair = wikitext[i:i + 2]
+        if pair == "{{":
+            depth += 1
+            i += 2
+        elif pair == "}}":
+            depth -= 1
+            i += 2
+            if depth == 0:
+                return wikitext[m.start():i]
+        else:
+            i += 1
+    return None
+
+
 def parse_infobox(wikitext: str, template: str) -> dict | None:
     """Every field of the first `{{template ...}}` on the page, markup stripped, plus our columns."""
-    code = mwparserfromhell.parse(wikitext)
     want = _norm(template)
+    block = _template_block(wikitext, template)       # parse only the box: broken markup elsewhere
+    # Bold/italic quote marks carry no data, and an unbalanced pair swallows the next fields.
+    code = mwparserfromhell.parse(re.sub(r"'{2,}", "", block or wikitext))
     box = next((t for t in code.filter_templates(recursive=False) if _norm(str(t.name)) == want), None)
     if box is None:
         return None
@@ -61,8 +85,11 @@ def parse_infobox(wikitext: str, template: str) -> dict | None:
     by_norm = {_norm(k): v for k, v in fields.items()}
     for col, names in SYNONYMS.items():
         for n in names:
-            if by_norm.get(n):
-                rec[col] = by_norm[n]
+            for key in (n, n + "1"):        # per-edition fields: released1, pages1, isbn10-1 ...
+                if by_norm.get(key):
+                    rec[col] = by_norm[key]
+                    break
+            if col in rec:
                 break
     return rec
 
@@ -123,7 +150,7 @@ def page_url(base: str, title: str) -> str:
 
 def collect(db, source, limit: int = 0, interval: float = 1.0) -> tuple[int, int]:
     """Fetch and store every product page of a MediaWiki source. Returns (pages, records)."""
-    from .store import save, save_source
+    from .store import save, save_raw, save_source
     save_source(db, source)
     wiki = Wiki(source.api, interval)
     titles = list(wiki.pages_using(source.template))
@@ -134,10 +161,12 @@ def collect(db, source, limit: int = 0, interval: float = 1.0) -> tuple[int, int
     for title, revid, text in wiki.contents(titles):
         pages += 1
         rec = parse_infobox(text, source.template)
-        if rec is None:
+        url = page_url(source.url, title)
+        if rec is None:                     # keep the page anyway: a better parser can read it later
+            save_raw(db, source.id, title, url, revid, now, text)
             continue
         rec.setdefault("title", title)
-        save(db, source.id, title, page_url(source.url, title), revid, now, text, rec)
+        save(db, source.id, title, url, revid, now, text, rec)
         records += 1
         if records % 200 == 0:
             db.commit()
