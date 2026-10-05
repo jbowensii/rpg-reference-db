@@ -14,6 +14,15 @@ RPG collections.
 > release will be published under [Releases](../../releases) once the remaining sources are in and
 > the records are merged and checked.
 
+## Disclaimer
+
+This repository holds **references only** (titles, codes, ISBNs, names, dates, page counts and
+links), never the works themselves in whole or in part. All product names, games, settings and
+company names are trademarks of their respective owners, used only to identify the products. This
+is an independent project, not affiliated with or endorsed by any publisher. The data is provided
+as is, without warranty. Rights holders can request corrections or removal through
+[Issues](../../issues). Full text: [`DISCLAIMER.md`](DISCLAIMER.md).
+
 ## Sources and credits
 
 Thank you to every editor of these wikis, databases and indexes. Every record names its source.

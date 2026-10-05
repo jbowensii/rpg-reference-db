@@ -46,7 +46,7 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
     used = sorted({src for _, src, _, _ in links})
     (out / "CREDITS.md").write_text(credits_md(stamp, len(products), used), encoding="utf-8")
     root = Path(__file__).resolve().parent.parent
-    for name in ("LICENSE", "LICENSE-DATA.md"):          # the licences travel with every release
+    for name in ("LICENSE", "LICENSE-DATA.md", "DISCLAIMER.md"):   # licences + disclaimer travel with every release
         if (root / name).exists():
             (out / name).write_text((root / name).read_text(encoding="utf-8"), encoding="utf-8")
     return target
@@ -62,6 +62,8 @@ def credits_md(stamp: str, n_products: int, used: list[str]) -> str:
              f"Release {stamp}: {n_products:,} products from {len(used)} sources. Thank you to everyone",
              "who built and maintains these sources. Every record links back to its source page",
              "(`product_records.url`). Data licence: CC BY-SA 4.0 (see LICENSE-DATA.md).", "",
+             "References only: no works are included in whole or in part, and all product and company names",
+             "are trademarks of their respective owners (see DISCLAIMER.md).", "",
              "## Sources in this release", "",
              "| Source | Made by | Contact | Licence |", "|---|---|---|---|"]
     for sid in used:
