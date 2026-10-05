@@ -9,7 +9,7 @@ from .store import connect
 
 def main() -> None:
     ap = argparse.ArgumentParser(prog="refdb")
-    ap.add_argument("command", choices=["collect", "stats", "merge"])
+    ap.add_argument("command", choices=["collect", "stats", "merge", "export"])
     ap.add_argument("source", nargs="?", default="all")
     ap.add_argument("--limit", type=int, default=0, help="only the first N pages (testing)")
     ap.add_argument("--interval", type=float, default=1.0, help="seconds between requests")
@@ -20,6 +20,11 @@ def main() -> None:
         from .merge import merge
         print(f"products (all sources): {merge(db):,}")
         print(f"products (public release): {merge(db, public=True):,}")
+        return
+    if a.command == "export":
+        from pathlib import Path
+        from .export import export
+        print(f"release written: {export(db, Path(a.source if a.source != 'all' else 'release'))}")
         return
     if a.command == "stats":
         for row in db.execute("SELECT source, count(*), count(code), count(isbn), count(year) "

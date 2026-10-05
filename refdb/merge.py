@@ -98,6 +98,10 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
         r["_title"] = norm_title(r["title"])
         r["_codes"] = norm_code(r["code"])
         r["_year"] = (re.search(r"(1[89]|20)\d\d", r["year"] or "") or [None])[0]
+    from collections import Counter
+    code_use = Counter(c for r in recs for c in r["_codes"])
+    for r in recs:     # a code shared by dozens of records ('100', '1') identifies nothing, and comparing
+        r["_codes"] = [c for c in r["_codes"] if code_use[c] <= 50]     # all their titles is quadratic
     uf = _UF(len(recs))
     by_isbn: dict[str, int] = {}
     by_code: dict[str, list[int]] = {}
