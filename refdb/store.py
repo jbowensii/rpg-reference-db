@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS records (
   edition TEXT, pages TEXT, product_type TEXT, cover TEXT,
   fields TEXT,                         -- every infobox field, JSON, as the source wrote it
   PRIMARY KEY (source, key));
+CREATE TABLE IF NOT EXISTS systems (     -- game systems / game lines (not individual books)
+  source TEXT, key TEXT, url TEXT,
+  name TEXT, edition TEXT, publisher TEXT, year TEXT, author TEXT, family TEXT,
+  fields TEXT,
+  PRIMARY KEY (source, key));
 CREATE INDEX IF NOT EXISTS records_isbn ON records(isbn);
 CREATE INDEX IF NOT EXISTS records_code ON records(code);
 """
@@ -33,6 +38,12 @@ def connect(path: str | Path) -> sqlite3.Connection:
 def save_source(db: sqlite3.Connection, s) -> None:
     db.execute("INSERT OR REPLACE INTO sources VALUES (?,?,?,?,?,?)",
                (s.id, s.name, s.url, s.licence, s.credit, int(s.publish)))
+
+
+def save_system(db: sqlite3.Connection, source: str, key: str, url: str, row: dict) -> None:
+    db.execute("INSERT OR REPLACE INTO systems VALUES (?,?,?,?,?,?,?,?,?,?)",
+               (source, key, url, row.get("name"), row.get("edition"), row.get("publisher"), row.get("year"),
+                row.get("author"), row.get("family"), json.dumps(row.get("fields") or {}, ensure_ascii=False)))
 
 
 def save_raw(db: sqlite3.Connection, source: str, key: str, url: str, revision: str, fetched_at: str,
