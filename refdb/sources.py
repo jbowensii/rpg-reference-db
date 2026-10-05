@@ -52,4 +52,6 @@ SOURCES = {s.id: s for s in [
     Source("waynesbooks", "Wayne's Books RPG Reference", "http://www.waynesbooks.com/",
            "Copyright Waynes World of Books; ask", "Wayne's Books RPG Reference, waynesbooks.com", False,
            "waynesbooks", "waynes", kind="crawl"),
+    Source("tsrarchive", "The TSR Archive", "http://www.tsrarchive.com/", "none stated; ask",
+           "The TSR Archive, tsrarchive.com", False, "tsrarchive", "tsrarchive", kind="crawl"),
 ]}

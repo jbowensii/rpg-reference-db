@@ -72,13 +72,57 @@ def parse_waynes(md: str) -> list[dict]:
     return out
 
 
-PARSERS = {"waynes": parse_waynes}
+# ---------------------------------------------------------------------------- TSR Archive
+_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_T_LABEL = {"item code": "code", "type": "product_type", "author": "author", "published": "year",
+            "format": "format", "notes": "notes", "publisher": "publisher", "related": "related",
+            "us version": "us_version"}
+
+
+def _split_lost_break(title: str) -> str:
+    """The crawl's HTML-to-markdown step drops <br> inside bold titles: 'Fear & FuryAhmut's Legion'.
+    ponytail: heuristic (lower->Upper+lower gets a space), may split an odd CamelCase name."""
+    return re.sub(r"(?<=[a-z)])(?=[A-Z][a-z])", " ", title)
+
+
+def parse_tsrarchive(md: str) -> list[dict]:
+    """Table cells: **Title** then **Item Code:** | 8461 | **Type:** | ... | **Published:** | 1985 |."""
+    page_title = _front_matter(md).get("title", "")
+    out, rec, title, label = [], None, None, None
+    for cell in (c.strip() for c in md.split("|")):
+        if not cell or set(cell) <= set("- "):
+            continue
+        m = re.fullmatch(r"\*\*([^*]+?):\*\*", cell)
+        if m:
+            label = _T_LABEL.get(_unescape(m.group(1)).lower())
+            if label == "code":                                 # every product starts with its item code
+                rec = {"title": title, "fields": {"page": page_title}}   # not always TSR's
+                out.append(rec)
+            continue
+        if label and rec is not None:
+            value = _unescape(_LINK.sub(r"\1", cell))
+            if label in ("code", "product_type", "author", "publisher"):
+                rec[label] = value
+            elif label == "year":
+                rec["year"] = (re.search(r"(?:19|20)\d\d", value) or [None])[0]
+                rec["fields"]["published"] = value
+            else:
+                rec["fields"][label] = value
+            label = None
+            continue
+        b = re.fullmatch(r"\*\*([^*]+)\*\*", cell)
+        if b and not b.group(1).rstrip().endswith(":"):
+            title = _split_lost_break(_unescape(b.group(1)))
+    return [r for r in out if r.get("title")]
+
+
+PARSERS = {"waynes": parse_waynes, "tsrarchive": parse_tsrarchive}
 
 
 def collect(db, source) -> int:
     """Parse every crawled page of a scraper-stack job into records."""
     save_source(db, source)
-    pages = sorted((CRAWL_ROOT / source.api / "pages").glob("*.md"))
+    pages = sorted((CRAWL_ROOT / source.api / "pages").rglob("*.md"))
     parse = PARSERS[source.template]
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     rows = 0
@@ -86,7 +130,7 @@ def collect(db, source) -> int:
         md = p.read_text(encoding="utf-8", errors="replace")
         url = _front_matter(md).get("source_url", "")
         for n, rec in enumerate(parse(md), 1):
-            save(db, source.id, f"{p.stem}#{n}", url, "", now, rec["fields"].get("data_line", ""), rec)
+            save(db, source.id, f"{p.relative_to(CRAWL_ROOT / source.api / 'pages').as_posix()}#{n}", url, "", now, rec["fields"].get("data_line", ""), rec)
             rows += 1
     db.commit()
     return rows
