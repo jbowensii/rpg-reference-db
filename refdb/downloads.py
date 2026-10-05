@@ -171,3 +171,67 @@ def collect_isfdb(db, source) -> int:
             rows += 1
     db.commit()
     return rows
+
+
+GAME_PUBLISHERS = re.compile(
+    r"Black Library|BL Publishing|\bTSR\b|Wizards of the Coast|\bFASA\b|Games Workshop|Chaosium|White Wolf|"
+    r"Steve Jackson Games|West End Games|Iron Crown|Palladium Books|Catalyst Game|Paizo|Game Designers'? Workshop|"
+    r"Mongoose Publishing|Fantasy Flight|Pelgrane|Flying Buffalo|Green Ronin|Privateer Press|Pinnacle Entertainment|"
+    r"Evil Hat|Arc Dream|Onyx Path|Cubicle 7|Modiphius|Free League|Kobold Press|Judges Guild|Mayfair Games|"
+    r"R\. ?Talsorian|Hero Games|Eden Studios|Margaret Weis Productions|Last Unicorn|Hogshead|Avalanche Press|"
+    r"Atlas Games|Necromancer Games|Goodman Games|Troll Lord|Sword ?& ?Sorcery Studio|Guardians of Order|"
+    r"Gold Rush Games|Grey Ghost|Columbia Games|Fantasy Games Unlimited|Task Force Games|Avalon Hill", re.I)
+GAME_SUBJECTS = re.compile(r"role[- ]?playing game|fantasy games|games, fantasy|dungeons (and|&) dragons", re.I)
+
+
+def collect_openlibrary(db, source) -> int:
+    """Stream Open Library's editions dump (~9 GB gzip, CC0) and keep game-publisher / role-playing
+    editions. Nothing is stored except the matching lines."""
+    import gzip
+    save_source(db, source)
+    rows = seen = 0
+    now = _now()
+    with httpx.stream("GET", source.api, headers={"User-Agent": UA}, timeout=600, follow_redirects=True) as r:
+        r.raise_for_status()
+        raw = _StreamFile(r.iter_raw(1 << 20))
+        with gzip.open(raw, "rt", encoding="utf-8", errors="replace") as lines:
+            for line in lines:
+                seen += 1
+                if seen % 2_000_000 == 0:
+                    db.commit()
+                    print(f"openlibrary: {seen:,} editions read, {rows:,} kept")
+                parts = line.split("\t", 4)
+                if len(parts) < 5 or not (GAME_PUBLISHERS.search(parts[4]) or GAME_SUBJECTS.search(parts[4])):
+                    continue
+                e = json.loads(parts[4])
+                pubs = "; ".join(e.get("publishers") or [])
+                subjects = " ".join(e.get("subjects") or [])
+                if not (GAME_PUBLISHERS.search(pubs) or GAME_SUBJECTS.search(subjects)):
+                    continue                    # the match was elsewhere (e.g. a description)
+                isbns = (e.get("isbn_13") or []) + (e.get("isbn_10") or [])
+                title = e.get("title", "") + (f": {e['subtitle']}" if e.get("subtitle") else "")
+                key = e.get("key", parts[1])
+                save(db, source.id, key, "https://openlibrary.org" + key, str(e.get("revision", "")), now, "", {
+                    "title": title, "publisher": pubs or None, "isbn": "; ".join(isbns) or None,
+                    "year": (re.search(r"(1[89]|20)\d\d", e.get("publish_date") or "") or [None])[0],
+                    "pages": str(e["number_of_pages"]) if e.get("number_of_pages") else None,
+                    "product_type": e.get("physical_format"), "fields": e})
+                rows += 1
+    db.commit()
+    return rows
+
+
+class _StreamFile:
+    """Minimal file object over an httpx byte iterator, so gzip can read the download as it arrives."""
+
+    def __init__(self, chunks) -> None:
+        self._chunks, self._buf = chunks, b""
+
+    def read(self, n: int = -1) -> bytes:
+        while n < 0 or len(self._buf) < n:
+            try:
+                self._buf += next(self._chunks)
+            except StopIteration:
+                break
+        out, self._buf = (self._buf, b"") if n < 0 else (self._buf[:n], self._buf[n:])
+        return out

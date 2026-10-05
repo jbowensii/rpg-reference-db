@@ -23,7 +23,8 @@ def main() -> None:
         for row in db.execute("SELECT source, count(*) FROM systems GROUP BY source ORDER BY source"):
             print("%-16s systems %6d" % row)
         return
-    ids = [k for k, s in SOURCES.items() if s.kind != "rpgnet"] if a.source == "all" else [a.source]
+    long_jobs = ("rpgnet", "openlibrary")          # hours long: run them on their own
+    ids = [k for k, s in SOURCES.items() if s.kind not in long_jobs] if a.source == "all" else [a.source]
     for sid in ids:
         s = SOURCES[sid]
         if s.kind == "mediawiki":
