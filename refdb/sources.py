@@ -41,6 +41,8 @@ SOURCES = {s.id: s for s in [
            "https://memory-beta.fandom.com/api.php", "Novel"),
     Source("wikipedia", "Wikipedia RPG product lists", "https://en.wikipedia.org/", "CC BY-SA 4.0",
            "Wikipedia contributors, en.wikipedia.org", True, "https://en.wikipedia.org/w/api.php", kind="wikipedia"),
+    Source("wikidata", "Wikidata", "https://www.wikidata.org/", "CC0 1.0", "Wikidata contributors, wikidata.org",
+           True, "https://query.wikidata.org/sparql", kind="wikidata"),
     # publish=False until permission: Kim asks to be emailed first; the other two have no licence.
     Source("kim", "John H. Kim's RPG Encyclopedia", "https://www.darkshire.net/jhkim/rpg/encyclopedia/",
            "Reuse with credit + link + notice to the author", "John H. Kim (J. Hanju Kim), darkshire.net",

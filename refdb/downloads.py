@@ -105,3 +105,42 @@ def collect_traveller(db, source) -> int:
             return rows
         offset += 500
         time.sleep(1)
+
+
+WIKIDATA_QUERY = """
+SELECT ?i ?iLabel (SAMPLE(?cL) AS ?type) (SAMPLE(?pubL) AS ?publisher) (MIN(?date) AS ?published)
+       (GROUP_CONCAT(DISTINCT ?isbn; separator="; ") AS ?isbns)
+       (GROUP_CONCAT(DISTINCT ?authL; separator="; ") AS ?authors)
+       (SAMPLE(?serL) AS ?series) (SAMPLE(?grog) AS ?grog_id) (SAMPLE(?ol) AS ?openlibrary_id) (SAMPLE(?wp) AS ?enwiki)
+WHERE {
+  VALUES ?c { wd:Q71631512 wd:Q4686479 wd:Q1643932 }   # RPG supplement, adventure module, tabletop RPG
+  ?i wdt:P31 ?c . ?c rdfs:label ?cL FILTER(lang(?cL) = "en")
+  ?i rdfs:label ?iLabel FILTER(lang(?iLabel) = "en")
+  OPTIONAL { ?i wdt:P123 ?pub . ?pub rdfs:label ?pubL FILTER(lang(?pubL) = "en") }
+  OPTIONAL { ?i wdt:P577 ?date }
+  OPTIONAL { { ?i wdt:P212 ?isbn } UNION { ?i wdt:P957 ?isbn } }
+  OPTIONAL { ?i wdt:P50 ?auth . ?auth rdfs:label ?authL FILTER(lang(?authL) = "en") }
+  OPTIONAL { ?i wdt:P179 ?ser . ?ser rdfs:label ?serL FILTER(lang(?serL) = "en") }
+  OPTIONAL { ?i wdt:P14656 ?grog } OPTIONAL { ?i wdt:P648 ?ol }
+  OPTIONAL { ?wp schema:about ?i ; schema:isPartOf <https://en.wikipedia.org/> }
+}
+GROUP BY ?i ?iLabel
+"""
+# Deliberately not queried: P7226 (RPGGeek ID) - BGG/RPGGeek data stays out of this database.
+
+
+def collect_wikidata(db, source) -> int:
+    """All tabletop-RPG items (games, supplements, adventures) in one SPARQL query. CC0."""
+    save_source(db, source)
+    d = _get(source.api, query=WIKIDATA_QUERY, format="json").json()
+    rows = 0
+    for b in d["results"]["bindings"]:
+        r = {k: v["value"] for k, v in b.items()}
+        qid = r["i"].rsplit("/", 1)[-1]
+        save(db, source.id, qid, r["i"], "", _now(), json.dumps(r, ensure_ascii=False), {
+            "title": r.get("iLabel"), "publisher": r.get("publisher"), "author": r.get("authors") or None,
+            "year": (r.get("published") or "")[:4] or None, "isbn": r.get("isbns") or None,
+            "product_type": r.get("type"), "fields": r})
+        rows += 1
+    db.commit()
+    return rows
