@@ -25,10 +25,11 @@ def _client() -> httpx.Client:
     return httpx.Client(headers={"User-Agent": UA}, timeout=120, follow_redirects=True)
 
 
-def _get(http: httpx.Client, url: str, **params) -> httpx.Response | None:
+def _get(http: httpx.Client, endpoint: str, **params) -> httpx.Response | None:
+    # (`endpoint`, not `url`: the CDX API itself takes a parameter called url)
     for attempt in range(6):                     # archive.org is often busy: back off and retry
         try:
-            r = http.get(url, params=params or None)
+            r = http.get(endpoint, params=params or None)
             if r.status_code == 200:
                 return r
             if r.status_code == 404:
