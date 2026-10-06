@@ -191,36 +191,55 @@ def collect_openlibrary(db, source) -> int:
     save_source(db, source)
     rows = seen = 0
     now = _now()
-    with httpx.stream("GET", source.api, headers={"User-Agent": UA}, timeout=600, follow_redirects=True) as r:
-        r.raise_for_status()
-        raw = _StreamFile(r.iter_raw(1 << 20))
-        with gzip.open(raw, "rt", encoding="utf-8", errors="replace") as lines:
-            for line in lines:
-                seen += 1
-                if seen % 2_000_000 == 0:
-                    db.commit()
-                    print(f"openlibrary: {seen:,} editions read, {rows:,} kept")
-                    write_status("openlibrary", done=False, read=seen, kept=rows)
-                parts = line.split("\t", 4)
-                if len(parts) < 5 or not (GAME_PUBLISHERS.search(parts[4]) or GAME_SUBJECTS.search(parts[4])):
-                    continue
-                e = json.loads(parts[4])
-                pubs = "; ".join(e.get("publishers") or [])
-                subjects = " ".join(e.get("subjects") or [])
-                if not (GAME_PUBLISHERS.search(pubs) or GAME_SUBJECTS.search(subjects)):
-                    continue                    # the match was elsewhere (e.g. a description)
-                isbns = (e.get("isbn_13") or []) + (e.get("isbn_10") or [])
-                title = e.get("title", "") + (f": {e['subtitle']}" if e.get("subtitle") else "")
-                key = e.get("key", parts[1])
-                save(db, source.id, key, "https://openlibrary.org" + key, str(e.get("revision", "")), now, "", {
-                    "title": title, "publisher": pubs or None, "isbn": "; ".join(isbns) or None,
-                    "year": (re.search(r"(1[89]|20)\d\d", e.get("publish_date") or "") or [None])[0],
-                    "pages": str(e["number_of_pages"]) if e.get("number_of_pages") else None,
-                    "product_type": e.get("physical_format"), "fields": e})
-                rows += 1
+    raw = _StreamFile(_resumable_bytes(source.api))
+    with gzip.open(raw, "rt", encoding="utf-8", errors="replace") as lines:
+        for line in lines:
+            seen += 1
+            if seen % 2_000_000 == 0:
+                db.commit()
+                print(f"openlibrary: {seen:,} editions read, {rows:,} kept")
+                write_status("openlibrary", done=False, read=seen, kept=rows)
+            parts = line.split("\t", 4)
+            if len(parts) < 5 or not (GAME_PUBLISHERS.search(parts[4]) or GAME_SUBJECTS.search(parts[4])):
+                continue
+            e = json.loads(parts[4])
+            pubs = "; ".join(e.get("publishers") or [])
+            subjects = " ".join(e.get("subjects") or [])
+            if not (GAME_PUBLISHERS.search(pubs) or GAME_SUBJECTS.search(subjects)):
+                continue                    # the match was elsewhere (e.g. a description)
+            isbns = (e.get("isbn_13") or []) + (e.get("isbn_10") or [])
+            title = e.get("title", "") + (f": {e['subtitle']}" if e.get("subtitle") else "")
+            key = e.get("key", parts[1])
+            save(db, source.id, key, "https://openlibrary.org" + key, str(e.get("revision", "")), now, "", {
+                "title": title, "publisher": pubs or None, "isbn": "; ".join(isbns) or None,
+                "year": (re.search(r"(1[89]|20)\d\d", e.get("publish_date") or "") or [None])[0],
+                "pages": str(e["number_of_pages"]) if e.get("number_of_pages") else None,
+                "product_type": e.get("physical_format"), "fields": e})
+            rows += 1
     db.commit()
     write_status("openlibrary", done=True, read=seen, kept=rows)
     return rows
+
+
+def _resumable_bytes(url: str, tries: int = 30):
+    """Yield the raw bytes of a big download, picking up where it left off (HTTP Range) when the
+    server drops the connection. archive.org dropped the 12 GB Open Library dump at 10.4 GB once."""
+    got = 0
+    for attempt in range(1, tries + 1):
+        headers = {"User-Agent": UA} | ({"Range": f"bytes={got}-"} if got else {})
+        try:
+            with httpx.stream("GET", url, headers=headers, timeout=600, follow_redirects=True) as r:
+                r.raise_for_status()
+                if got and r.status_code != 206:
+                    raise RuntimeError("server ignored the Range header; cannot resume")
+                for chunk in r.iter_raw(1 << 20):
+                    got += len(chunk)
+                    yield chunk
+            return
+        except httpx.TransportError as exc:
+            print(f"download dropped at {got:,} bytes ({type(exc).__name__}); resuming, try {attempt}")
+            time.sleep(min(120, 10 * attempt))
+    raise RuntimeError(f"download kept failing after {tries} tries at {got:,} bytes")
 
 
 class _StreamFile:
