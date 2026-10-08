@@ -27,7 +27,12 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
       CREATE TABLE product_records (product_id INTEGER, source TEXT, key TEXT, url TEXT);
       CREATE TABLE sources (id TEXT PRIMARY KEY, name TEXT, url TEXT, licence TEXT, credit TEXT,
                             owner TEXT, contact TEXT);
+      CREATE TABLE systems (source TEXT, key TEXT, url TEXT, name TEXT, edition TEXT, publisher TEXT,
+                            year TEXT, author TEXT, family TEXT);
     """)
+    systems = db.execute(f"SELECT source, key, url, name, edition, publisher, year, author, family FROM systems "
+                         f"WHERE source IN ({','.join('?' * len(public))})", list(public)).fetchall()
+    rel.executemany("INSERT INTO systems VALUES (?,?,?,?,?,?,?,?,?)", systems)
     products = db.execute(f"SELECT {', '.join(PRODUCT_COLS)} FROM public_products").fetchall()
     links = db.execute("SELECT product_id, source, key, url FROM public_product_records").fetchall()
     assert all(src in public for _, src, _, _ in links), "a private source reached the release"
@@ -43,7 +48,7 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
         w.writerow(PRODUCT_COLS)
         w.writerows(products)
 
-    used = sorted({src for _, src, _, _ in links})
+    used = sorted({src for _, src, _, _ in links} | {s[0] for s in systems})
     (out / "CREDITS.md").write_text(credits_md(stamp, len(products), used), encoding="utf-8")
     root = Path(__file__).resolve().parent.parent
     for name in ("LICENSE", "LICENSE-DATA.md", "DISCLAIMER.md"):   # licences + disclaimer travel with every release

@@ -38,16 +38,17 @@ Thank you to every editor of these wikis, databases and indexes. Every record na
 | [Wikidata](https://www.wikidata.org/) | ~3.7k games, supplements, adventures; cross-links between catalogues | CC0 | yes |
 | [ISFDB](https://www.isfdb.org/) | Game-world fiction (Black Library, TSR/WotC, BattleTech, Star Wars, Star Trek...) | CC BY 4.0 | yes |
 | [Open Library](https://openlibrary.org/) | Editions from game publishers: ISBNs, dates, pages | CC0 | yes |
-| [John H. Kim's RPG Encyclopedia](https://www.darkshire.net/jhkim/rpg/encyclopedia/) | ~2,000 game-system editions | reuse with credit, link and notice | after notice |
-| [Traveller Wiki](https://wiki.travellerrpg.com/) | 1,334 Traveller products, all publishers | no open licence | asking |
-| [TTRPG Wiki](https://ttrpgwiki.com/) | ~300 current game systems | none stated | asking |
-| [The TSR Archive](http://www.tsrarchive.com/) | TSR item codes, formats, years | none stated | asking |
-| [Wayne's Books RPG Reference](http://www.waynesbooks.com/) | Print-era products: stock codes, ISBNs, pages | copyright | asking |
+| [John H. Kim's RPG Encyclopedia](https://www.darkshire.net/jhkim/rpg/encyclopedia/) | ~2,000 game-system editions | used with permission (facts only) | yes |
+| [Traveller Wiki](https://wiki.travellerrpg.com/) | 1,334 Traveller products, all publishers | used with permission (facts only) | yes |
+| [TTRPG Wiki](https://ttrpgwiki.com/) | ~300 current game systems | used with permission (facts only) | yes |
+| [The TSR Archive](http://www.tsrarchive.com/) | TSR item codes, formats, years | used with permission (facts only) | yes |
+| [Wayne's Books RPG Reference](http://www.waynesbooks.com/) | Print-era products: stock codes, ISBNs, pages | used with permission (facts only) | yes |
 | RPGnet Gaming Index (via the Internet Archive) | Editions, stock numbers, ISBNs | (c) Dyvers Hands | no (private) |
 | Le GRoG | French and English editions, ISBNs, pages | EU database right | no (private) |
 
-"Asking" means the owner is being asked for permission; until then those records are used
-privately for matching and are not in the release.
+"Used with permission" sources agreed in October 2026 to have their facts (titles, codes, ISBNs,
+publishers, authors, years, page counts) republished here, credited and linked; never their
+descriptions, reviews or images. RPGnet and Le GRoG are used privately for matching only.
 
 ## What is deliberately NOT in the public release
 

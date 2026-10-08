@@ -6,11 +6,11 @@ always credited and linked. Never descriptions, reviews or images. Edit freely b
 
 | Site | Contact | Status |
 |---|---|---|
-| Wayne's Books RPG Reference | waynesbooks.com contact page | not sent |
-| John H. Kim's RPG Encyclopedia | email on darkshire.net (his policy: credit, link, and tell him) | not sent |
-| The TSR Archive | black_dougal@yahoo.com | not sent |
-| Traveller Wiki | wiki.travellerrpg.com admins | not sent |
-| TTRPG Wiki | thettrpgwiki@gmail.com | not sent |
+| Wayne's Books RPG Reference | waynesbooks.com contact page | **granted 2026-10-08** |
+| John H. Kim's RPG Encyclopedia | email on darkshire.net (his policy: credit, link, and tell him) | **granted 2026-10-08** |
+| The TSR Archive | via tsrarchive.com | **granted 2026-10-08** |
+| Traveller Wiki | wiki.travellerrpg.com admins | **granted 2026-10-08** |
+| TTRPG Wiki | thettrpgwiki@gmail.com | **granted 2026-10-08** |
 | The Acaeum (optional) | acaeum.com | not sent |
 | Steve Jackson Games (optional) | sjgames.com contact | not sent |
 | Lexicanum (optional) | lexicanum.com admins | not sent |
