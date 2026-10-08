@@ -16,6 +16,8 @@ from .sources import SOURCES
 # Most specific / most carefully edited first.
 PRIORITY = ["sarna", "whitewolf", "forgottenrealms", "wookieepedia", "memorybeta", "traveller", "wikipedia",
             "waynesbooks", "tsrarchive", "isfdb", "legrog", "openlibrary", "rpgnet", "wikidata"]
+# Open Library often records the US distributor of early TSR books ("Distributed by Random House").
+NOT_PUBLISHER = re.compile(r"\s*(distributed\b|distrib\.|\[?s\.\s?n\.\]?$)", re.I)
 FIELDS = ("title", "publisher", "author", "year", "code", "isbn", "edition", "pages", "product_type")
 
 SCHEMA = """
@@ -137,7 +139,7 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
         chosen, prov = {}, {}
         for f in FIELDS:
             for r in members:
-                if r[f]:
+                if r[f] and not (f == "publisher" and NOT_PUBLISHER.match(r[f])):
                     chosen[f], prov[f] = r[f], f"{r['source']}:{r['key']}"
                     break
         isbns = list(dict.fromkeys(x for r in members for x in r["_isbns"]))

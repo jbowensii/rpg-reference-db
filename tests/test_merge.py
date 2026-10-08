@@ -43,3 +43,11 @@ def test_credits_name_every_source() -> None:
     for s in SOURCES.values():
         if not s.publish:
             assert s.name in md                     # thanked even though their data is not released
+
+
+def test_distributor_is_not_publisher() -> None:
+    from refdb.merge import NOT_PUBLISHER
+    assert NOT_PUBLISHER.match("Distributed by Random House")
+    assert NOT_PUBLISHER.match("[s.n.]")
+    assert not NOT_PUBLISHER.match("TSR")
+    assert not NOT_PUBLISHER.match("Distant Horizons Press")
