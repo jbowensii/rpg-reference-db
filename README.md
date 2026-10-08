@@ -50,6 +50,15 @@ Thank you to every editor of these wikis, databases and indexes. Every record na
 publishers, authors, years, page counts) republished here, credited and linked; never their
 descriptions, reviews or images.
 
+### Coming next: a collection survey as a source
+
+A later release adds the facts verified while cataloguing a large private collection of game books
+with [book_sorter](https://github.com/jbowensii/book_sorter): titles, publishers, authors, years,
+editions, codes and ISBNs read from the books' own title and copyright pages (local OCR and AI,
+then checked against the sources above). It will be credited like every other source, with its
+own record links. Only those facts are published: never file names, folder paths, checksums or
+anything else about the collection itself.
+
 ## What is deliberately NOT in the public release
 
 - **Sources whose owner hasn't allowed republishing.** Every source listed above is open or has
