@@ -77,11 +77,17 @@ SOURCES = {s.id: s for s in [
            False, "", kind="rpgnet",
            owner="RPGnet / Dyvers Hands", contact="https://www.rpg.net/"),
     # Crawled with scraper-stack: `api` = the job folder, `template` = the page parser.
+    # Wayne granted permission 2026-10-08: facts only (title, year, author, pages, codes, ISBN), no blurbs.
     Source("waynesbooks", "Wayne's Books RPG Reference", "http://www.waynesbooks.com/",
-           "Copyright Waynes World of Books; ask", "Wayne's Books RPG Reference, waynesbooks.com", False,
+           "Used with permission of Waynes World of Books (facts only)", "Wayne's Books RPG Reference, waynesbooks.com", True,
            "waynesbooks", "waynes", kind="crawl",
            owner="Wayne's Books", contact="http://www.waynesbooks.com/ContactWaynesBookscom.html"),
     Source("tsrarchive", "The TSR Archive", "http://www.tsrarchive.com/", "none stated; ask",
            "The TSR Archive, tsrarchive.com", False, "tsrarchive", "tsrarchive", kind="crawl",
            owner="The TSR Archive", contact="http://www.tsrarchive.com/"),
+    # Private only: Le GRoG's legal page invokes EU database rights and forbids public reproduction.
+    Source("legrog", "Le GRoG - Guide du Rôliste Galactique", "https://www.legrog.org/",
+           "(c) Le GRoG; EU database right, no public reproduction", "Le Guide du Rôliste Galactique, legrog.org",
+           False, "legrog", "grog", kind="crawl",
+           owner="Le GRoG association and contributors", contact="https://www.legrog.org/"),
 ]}

@@ -15,7 +15,7 @@ from .sources import SOURCES
 
 # Most specific / most carefully edited first.
 PRIORITY = ["sarna", "whitewolf", "forgottenrealms", "wookieepedia", "memorybeta", "traveller", "wikipedia",
-            "waynesbooks", "tsrarchive", "isfdb", "openlibrary", "rpgnet", "wikidata"]
+            "waynesbooks", "tsrarchive", "isfdb", "legrog", "openlibrary", "rpgnet", "wikidata"]
 FIELDS = ("title", "publisher", "author", "year", "code", "isbn", "edition", "pages", "product_type")
 
 SCHEMA = """

@@ -1,4 +1,5 @@
 """python -m refdb collect <source|all> [--limit N] [--db data/refdb.sqlite]
+   python -m refdb import <other.sqlite>   (copy a long job's own database into the main one)
    python -m refdb stats [--db ...]"""
 import argparse
 
@@ -9,7 +10,7 @@ from .store import connect
 
 def main() -> None:
     ap = argparse.ArgumentParser(prog="refdb")
-    ap.add_argument("command", choices=["collect", "stats", "merge", "export"])
+    ap.add_argument("command", choices=["collect", "stats", "merge", "export", "import"])
     ap.add_argument("source", nargs="?", default="all")
     ap.add_argument("--limit", type=int, default=0, help="only the first N pages (testing)")
     ap.add_argument("--interval", type=float, default=1.0, help="seconds between requests")
@@ -20,6 +21,15 @@ def main() -> None:
         from .merge import merge
         print(f"products (all sources): {merge(db):,}")
         print(f"products (public release): {merge(db, public=True):,}")
+        return
+    if a.command == "import":                  # long jobs keep their own file: copy it in
+        db.execute("ATTACH DATABASE ? AS other", (a.source,))
+        for table in ("sources", "raw", "records", "systems"):
+            if db.execute("SELECT 1 FROM other.sqlite_master WHERE name = ?", (table,)).fetchone():
+                n = db.execute(f"INSERT OR REPLACE INTO {table} SELECT * FROM other.{table}").rowcount
+                print(f"{table}: {n:,} rows")
+        db.commit()
+        db.execute("DETACH DATABASE other")
         return
     if a.command == "export":
         from pathlib import Path

@@ -7,7 +7,7 @@ import os
 import re
 from pathlib import Path
 
-from .store import save, save_source
+from .store import save, save_source, save_system
 
 CRAWL_ROOT = Path(os.environ.get("REFDB_CRAWL_ROOT", "/scraper"))
 
@@ -116,7 +116,71 @@ def parse_tsrarchive(md: str) -> list[dict]:
     return [r for r in out if r.get("title")]
 
 
-PARSERS = {"waynes": parse_waynes, "tsrarchive": parse_tsrarchive}
+# ---------------------------------------------------------------------------- Le GRoG
+_G_BULLET = re.compile(r"^- \*\*(.+?)\s*:\*\*\s*(.*)$", re.M)
+_G_THEME = re.compile(r"^\*\*(.+?)\s*:\*\*\s*(.*)$", re.M)
+_G_LABEL = {"Editeur": "publisher", "Version": "edition", "Type d'ouvrage": "product_type",
+            "Création et rédaction": "author"}
+_G_MONTHS = ("janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre",
+             "octobre", "novembre", "décembre")
+
+
+def _g_clean(v: str) -> str:
+    """'[Greg Porter![](../images/x.png "Biographie")](/biographies/greg-porter), [Bob]' -> 'Greg Porter; Bob'."""
+    v = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", v)              # inline icons
+    v = re.sub(r"!\[\]", "", v)
+    names = re.findall(r"\[([^\]]*)\]\([^)]*\)", v)
+    text = "; ".join(n.strip() for n in names if n.strip()) if names else v
+    return _unescape(text)
+
+
+def parse_grog(md: str) -> list[dict]:
+    """Le GRoG product page -> one record keeping every labelled field (empty ones too, so they can be
+    filled later); a game-line page -> one `system` row. Labels are French; values are kept as written."""
+    fm = _front_matter(md)
+    refs = md.split("### Références", 1)
+    if len(refs) < 2:
+        return []
+    block = refs[1].split("\n### ", 1)[0]
+    fields = {_unescape(k): _g_clean(v) for k, v in _G_BULLET.findall(block)}
+    if "Type d'ouvrage" not in fields and "Gamme" not in fields:      # a game line, not a book
+        fields.update({_unescape(k): _g_clean(v) for k, v in _G_THEME.findall(block)})
+        return [{"system": True, "name": fm.get("title"), "fields": fields}]
+    credits = md.split("### Contributeurs", 1)
+    if len(credits) == 2:
+        fields.update({_unescape(k): _g_clean(v)
+                       for k, v in _G_BULLET.findall(credits[1].split("\n### ", 1)[0])})
+    raw_title = _unescape(fm.get("title", "")).replace("\x92", "'")
+    fields["grog_title"] = raw_title
+    title = re.sub(r"\s*\((?=[\dXx -]*\d)[\dXx -]{10,17}\)\s*$", "", raw_title)    # "(0-935696-59-8)"
+    art = re.search(r"\s*\((The|A|An|Le|La|Les|L'|Der|Die|Das|El|Il)\)$", title)
+    if art:                                              # "Kathol Outback (The)" -> "The Kathol Outback"
+        a = art.group(1)
+        title = a + ("" if a.endswith("'") else " ") + title[:art.start()]
+    rec = {"title": title, "fields": fields}
+    for label, col in _G_LABEL.items():
+        if fields.get(label):
+            rec[col] = fields[label]
+    date = fields.get("Date de publication", "")
+    year = re.search(r"(1[89]|20)\d\d", date)
+    rec["year"] = year.group(0) if year else None
+    month = next((i for i, m in enumerate(_G_MONTHS, 1) if m in date.lower()), None)
+    fields["month"] = month
+    isbn = re.sub(r"[^0-9Xx]", "", fields.get("EAN/ISBN", ""))
+    rec["isbn"] = isbn.upper() if len(isbn) in (10, 13) else None
+    material = md.split("#### Matériel", 1)
+    if len(material) == 2:
+        para = next((ln.strip() for ln in material[1].split("\n#", 1)[0].splitlines() if ln.strip()), "")
+        fields["Matériel"] = _unescape(para)
+        m = re.search(r"(\d+)\s+pages", para)
+        rec["pages"] = m.group(1) if m else None
+    original = re.search(r"\*\*Ouvrage original :\*\*\s*\n*\s*-?\s*\[([^\]]+)\]\(([^)]+)\)", md)
+    if original:
+        fields["original"] = {"title": _unescape(original.group(1)), "url": "https://www.legrog.org" + original.group(2)}
+    return [rec]
+
+
+PARSERS = {"waynes": parse_waynes, "tsrarchive": parse_tsrarchive, "grog": parse_grog}
 
 
 def collect(db, source) -> int:
@@ -129,8 +193,12 @@ def collect(db, source) -> int:
     for p in pages:
         md = p.read_text(encoding="utf-8", errors="replace")
         url = _front_matter(md).get("source_url", "")
+        key = p.relative_to(CRAWL_ROOT / source.api / "pages").as_posix()
         for n, rec in enumerate(parse(md), 1):
-            save(db, source.id, f"{p.relative_to(CRAWL_ROOT / source.api / 'pages').as_posix()}#{n}", url, "", now, rec["fields"].get("data_line", ""), rec)
+            if rec.get("system"):                               # a game line, not a product
+                save_system(db, source.id, key, url, rec)
+                continue
+            save(db, source.id, f"{key}#{n}", url, "", now, rec["fields"].get("data_line", ""), rec)
             rows += 1
     db.commit()
     return rows

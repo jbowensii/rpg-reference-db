@@ -29,9 +29,9 @@ def test_merge_links_by_isbn_code_and_title() -> None:
     (p,) = db.execute("SELECT title, publisher, isbn13, sources FROM products WHERE sources LIKE '%wayne%'").fetchall()
     assert p[0] == "Slave Pits of the Undercity" and p[1] == "TSR" and p[2] == "9780935696257"
     assert set(p[3].split("; ")) == {"wikipedia", "waynesbooks", "rpgnet"}
-    # public merge leaves private sources (rpgnet, waynesbooks, tsrarchive) out entirely
+    # public merge leaves private sources (rpgnet, tsrarchive) out entirely; Wayne's is public (permission 2026-10-08)
     assert merge(db, public=True) == 1
-    assert db.execute("SELECT sources FROM public_products").fetchone()[0] == "wikipedia"
+    assert db.execute("SELECT sources FROM public_products").fetchone()[0] == "wikipedia; waynesbooks"
 
 
 def test_credits_name_every_source() -> None:
