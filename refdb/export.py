@@ -12,7 +12,7 @@ from pathlib import Path
 from .sources import SOURCES
 
 PRODUCT_COLS = ("id", "title", "publisher", "author", "year", "code", "isbn13", "edition", "pages",
-                "product_type", "isbns", "codes", "sources", "provenance")
+                "product_type", "isbns", "codes", "sources", "provenance", "publisher_variants", "work_id")
 
 
 def export(db: sqlite3.Connection, out: Path) -> Path:
@@ -23,13 +23,17 @@ def export(db: sqlite3.Connection, out: Path) -> Path:
     target.unlink(missing_ok=True)
     rel = sqlite3.connect(target)
     rel.executescript(f"""
-      CREATE TABLE products ({', '.join(c + (' INTEGER PRIMARY KEY' if c == 'id' else ' TEXT') for c in PRODUCT_COLS)});
+      CREATE TABLE products ({', '.join(c + (' INTEGER PRIMARY KEY' if c == 'id' else ' INTEGER' if c == 'work_id' else ' TEXT') for c in PRODUCT_COLS)});
       CREATE TABLE product_records (product_id INTEGER, source TEXT, key TEXT, url TEXT);
       CREATE TABLE sources (id TEXT PRIMARY KEY, name TEXT, url TEXT, licence TEXT, credit TEXT,
                             owner TEXT, contact TEXT);
       CREATE TABLE systems (source TEXT, key TEXT, url TEXT, name TEXT, edition TEXT, publisher TEXT,
                             year TEXT, author TEXT, family TEXT);
+      CREATE TABLE company_names (variant TEXT PRIMARY KEY, name TEXT, group_id INTEGER, uses INTEGER);
+      CREATE TABLE system_names (variant TEXT PRIMARY KEY, name TEXT, group_id INTEGER, uses INTEGER);
     """)
+    for table in ("company_names", "system_names"):    # built by the public merge from public sources only
+        rel.executemany(f"INSERT INTO {table} VALUES (?,?,?,?)", db.execute(f"SELECT * FROM {table}").fetchall())
     systems = db.execute(f"SELECT source, key, url, name, edition, publisher, year, author, family FROM systems "
                          f"WHERE source IN ({','.join('?' * len(public))})", list(public)).fetchall()
     rel.executemany("INSERT INTO systems VALUES (?,?,?,?,?,?,?,?,?)", systems)

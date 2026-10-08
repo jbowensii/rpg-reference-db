@@ -11,6 +11,7 @@ import re
 import sqlite3
 from difflib import SequenceMatcher
 
+from .names import split_companies, write_tables
 from .sources import SOURCES
 
 # Most specific / most carefully edited first.
@@ -24,7 +25,7 @@ SCHEMA = """
 DROP TABLE IF EXISTS {p}products; DROP TABLE IF EXISTS {p}product_records;
 CREATE TABLE {p}products (id INTEGER PRIMARY KEY, title TEXT, publisher TEXT, author TEXT, year TEXT,
   code TEXT, isbn13 TEXT, edition TEXT, pages TEXT, product_type TEXT,
-  isbns TEXT, codes TEXT, sources TEXT, provenance TEXT);
+  isbns TEXT, codes TEXT, sources TEXT, provenance TEXT, publisher_variants TEXT, work_id INTEGER);
 CREATE TABLE {p}product_records (product_id INTEGER, source TEXT, key TEXT, url TEXT);
 """
 
@@ -33,7 +34,8 @@ CREATE TABLE {p}product_records (product_id INTEGER, source TEXT, key TEXT, url 
 def isbn13s(text: str | None) -> list[str]:
     """Every checksum-valid ISBN in a free-text field, as ISBN-13."""
     out = []
-    for raw in re.findall(r"(?:97[89][\s-]?)?(?:\d[\s-]?){9}[\dXx]", text or ""):
+    text = re.sub(r"(?<=\d)-(?=[\dXx])", "", text or "")     # '9-781560-765899' -> '9781560765899'
+    for raw in re.findall(r"(?:97[89][\s-]?)?(?:\d[\s-]?){9}[\dXx]", text):
         d = re.sub(r"[^0-9Xx]", "", raw).upper()
         if len(d) == 10 and re.fullmatch(r"\d{9}[\dX]", d):
             if sum((10 - i) * (10 if c == "X" else int(c)) for i, c in enumerate(d)) % 11 == 0:
@@ -71,7 +73,10 @@ def _pub_ok(a: str | None, b: str | None) -> bool:
     if not a or not b:
         return True
     na, nb = norm_title(a).split(), norm_title(b).split()
-    return bool(set(na[:2]) & set(nb[:2]))      # 'TSR, Inc.' ~ 'TSR'; 'Wizards of the Coast' ~ 'Wizards'
+    if set(na[:2]) & set(nb[:2]):               # 'TSR, Inc.' ~ 'TSR'; 'Wizards of the Coast' ~ 'Wizards'
+        return True
+    sa, sb = "".join(na), "".join(nb)            # 'T.S.R.' ~ 'TSR, Inc.' ('tsr' vs 'tsrinc')
+    return len(min(sa, sb, key=len)) >= 3 and (sa.startswith(sb) or sb.startswith(sa))
 
 
 # ---------------------------------------------------------------- clustering
@@ -95,7 +100,14 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
     rows = db.execute(f"SELECT source, key, url, {', '.join(FIELDS)} FROM records WHERE source IN "
                       f"({','.join('?' * len(sources))})", sources).fetchall()
     recs = [dict(zip(("source", "key", "url") + FIELDS, r)) for r in rows]
+    write_tables(db, [k for k, s in SOURCES.items() if s.publish or not public])   # standard names
+    std = dict(db.execute("SELECT variant, name FROM company_names"))
+
+    def standard(field: str | None) -> str | None:
+        return "; ".join(dict.fromkeys(std.get(c, c) for c in split_companies(field))) or None
+
     for r in recs:
+        r["_pub"] = standard(r["publisher"])
         r["_isbns"] = isbn13s(r["isbn"])
         r["_title"] = norm_title(r["title"])
         r["_codes"] = norm_code(r["code"])
@@ -122,7 +134,7 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
         if r["_title"] and r["_year"]:                              # 3. same title + year, publisher ok
             k = (r["_title"], r["_year"])
             for j in by_title_year.get(k, []):
-                if _pub_ok(r["publisher"], recs[j]["publisher"]):
+                if _pub_ok(r["_pub"], recs[j]["_pub"]):
                     uf.union(i, j)
             by_title_year.setdefault(k, []).append(i)
 
@@ -133,6 +145,8 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
     p = "public_" if public else ""
     db.executescript(SCHEMA.format(p=p))
     pid = 0
+    works = _UF(len(clusters) + 1)
+    by_work: dict[tuple, list[int]] = {}
     for members in clusters.values():
         members.sort(key=lambda r: rank[r["source"]])
         pid += 1
@@ -140,17 +154,35 @@ def merge(db: sqlite3.Connection, public: bool = False) -> int:
         for f in FIELDS:
             for r in members:
                 if r[f] and not (f == "publisher" and NOT_PUBLISHER.match(r[f])):
-                    chosen[f], prov[f] = r[f], f"{r['source']}:{r['key']}"
+                    chosen[f], prov[f] = (r["_pub"] if f == "publisher" else r[f]), f"{r['source']}:{r['key']}"
                     break
+        variants = list(dict.fromkeys(c for r in members for c in split_companies(r["publisher"])
+                                      if not NOT_PUBLISHER.match(c)))
+        title = norm_title(chosen.get("title"))
+        year = (re.search(r"(1[89]|20)\d\d", chosen.get("year") or "") or [None])[0]
+        surnames = {w for r in members for w in re.findall(r"[a-z]{4,}", (r["author"] or "").lower())}
+        if title:                                   # editions of one work: same title + an author in
+            for w in surnames:                      # common, or same publisher and year
+                for q in by_work.setdefault((title, "a", w), []):
+                    works.union(pid, q)
+                by_work[(title, "a", w)].append(pid)
+            if chosen.get("publisher") and year:
+                k = (title, "p", chosen["publisher"].lower(), year)
+                for q in by_work.setdefault(k, []):
+                    works.union(pid, q)
+                by_work[k].append(pid)
         isbns = list(dict.fromkeys(x for r in members for x in r["_isbns"]))
         codes = list(dict.fromkeys(r["code"] for r in members if r["code"]))
-        db.execute(f"INSERT INTO {p}products VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+        db.execute(f"INSERT INTO {p}products VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
             pid, chosen.get("title"), chosen.get("publisher"), chosen.get("author"),
             (re.search(r"(1[89]|20)\d\d", chosen.get("year") or "") or [chosen.get("year")])[0],
             chosen.get("code"), isbns[0] if isbns else None, chosen.get("edition"), chosen.get("pages"),
             chosen.get("product_type"), "; ".join(isbns) or None, "; ".join(codes) or None,
-            "; ".join(dict.fromkeys(r["source"] for r in members)), json.dumps(prov)))
+            "; ".join(dict.fromkeys(r["source"] for r in members)), json.dumps(prov),
+            "; ".join(variants) or None, None))
         db.executemany(f"INSERT INTO {p}product_records VALUES (?,?,?,?)",
                        [(pid, r["source"], r["key"], r["url"]) for r in members])
+    db.executemany(f"UPDATE {p}products SET work_id = ? WHERE id = ?",
+                   [(works.find(i), i) for i in range(1, pid + 1)])
     db.commit()
     return pid

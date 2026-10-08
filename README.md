@@ -69,6 +69,22 @@ anything else about the collection itself.
   facts (titles, codes, ISBNs, names, dates, page counts) plus links back to each source page.
 - **Nothing about anyone's personal collection.** No file names, paths or checksums.
 
+## What's in a release
+
+One SQLite file (plus a CSV of the products table):
+
+| Table | What it holds |
+|---|---|
+| `products` | One row per edition: title, standard publisher, author, year, code, ISBN-13, edition, pages, type; every ISBN and code seen; which sources agree; `provenance` (which source supplied each field); `publisher_variants` (every spelling the sources used); `work_id` (editions of the same work share it) |
+| `product_records` | Every source record behind each product, with a link to its page |
+| `company_names` | Every spelling of every company, with its standard name: `TSR`, `TSR, Inc.`, `T.S.R.` and `TSR Hobbies` are all `TSR` |
+| `system_names` | The same for game systems and game lines |
+| `systems` | Game systems and lines (Kim's encyclopedia, ttrpgwiki, Le GRoG) |
+| `sources` | Every source, its licence, owner and contact |
+
+The standard name is the spelling the sources use most; a short hand-kept list in
+`refdb/names.py` records renames (TSR Hobbies became TSR) and any standard name chosen by hand.
+
 ## Licence
 
 - **Code** (`refdb/`, `tests/`): **MIT**, see `LICENSE`.

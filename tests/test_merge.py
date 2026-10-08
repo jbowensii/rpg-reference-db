@@ -56,3 +56,27 @@ def test_distributor_is_not_publisher() -> None:
     assert NOT_PUBLISHER.match("[s.n.]")
     assert not NOT_PUBLISHER.match("TSR")
     assert not NOT_PUBLISHER.match("Distant Horizons Press")
+
+
+def test_standard_publisher_and_works() -> None:
+    import sqlite3
+    from refdb.merge import merge
+    from refdb.store import SCHEMA
+    db = sqlite3.connect(":memory:")
+    db.executescript(SCHEMA)
+    for row in [
+        ("wikipedia", "w1", "City of Delights", None, None, "TSR, Inc.", "1993", None),
+        ("legrog", "g1", "City of Delights", None, None, "T.S.R.", "1993", None),          # no shared ISBN
+        ("wikidata", "q1", "City of Delights", None, None, "TSR", "1993", None),
+        ("wikidata", "q2", "Night Below", None, None, "TSR", "1995", None),     # makes 'TSR' the usual spelling
+        ("isfdb", "i1", "Darth Plagueis", None, "9780345511287", "Del Rey", "2012", "James Luceno"),
+        ("isfdb", "i2", "Darth Plagueis", None, "9781846056789", "Century", "2012", "James Luceno"),
+    ]:
+        db.execute("INSERT INTO records (source, key, title, code, isbn, publisher, year, author) "
+                   "VALUES (?,?,?,?,?,?,?,?)", row)
+    assert merge(db) == 4                     # City of Delights merged; two Plagueis editions kept apart
+    (pub, variants) = db.execute("SELECT publisher, publisher_variants FROM products "
+                                 "WHERE title = 'City of Delights'").fetchone()
+    assert pub == "TSR" and set(variants.split("; ")) == {"TSR, Inc.", "T.S.R.", "TSR"}
+    works = {r[0] for r in db.execute("SELECT work_id FROM products WHERE title = 'Darth Plagueis'")}
+    assert len(works) == 1                    # ...but linked as one work
