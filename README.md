@@ -43,18 +43,18 @@ Thank you to every editor of these wikis, databases and indexes. Every record na
 | [TTRPG Wiki](https://ttrpgwiki.com/) | ~300 current game systems | used with permission (facts only) | yes |
 | [The TSR Archive](http://www.tsrarchive.com/) | TSR item codes, formats, years | used with permission (facts only) | yes |
 | [Wayne's Books RPG Reference](http://www.waynesbooks.com/) | Print-era products: stock codes, ISBNs, pages | used with permission (facts only) | yes |
-| RPGnet Gaming Index (via the Internet Archive) | Editions, stock numbers, ISBNs | (c) Dyvers Hands | no (private) |
-| Le GRoG | French and English editions, ISBNs, pages | EU database right | no (private) |
+| RPGnet Gaming Index (via the Internet Archive) | Editions, stock numbers, ISBNs | used with permission (facts only) | yes |
+| Le GRoG | French and English editions, ISBNs, pages | used with permission (facts only) | yes |
 
 "Used with permission" sources agreed in October 2026 to have their facts (titles, codes, ISBNs,
 publishers, authors, years, page counts) republished here, credited and linked; never their
-descriptions, reviews or images. RPGnet and Le GRoG are used privately for matching only.
+descriptions, reviews or images.
 
 ## What is deliberately NOT in the public release
 
-- **Sources whose owner hasn't allowed republishing.** Some sites are used privately, only to
-  help identify books, and never leave the collector's own database. That includes sites with no
-  licence (until their owners agree) and sites whose terms forbid reproduction.
+- **Sources whose owner hasn't allowed republishing.** Every source listed above is open or has
+  agreed. Any source added later without a licence or the owner's OK is used privately, only to
+  help identify books, and never leaves the collector's own database.
 - **Anything from BoardGameGeek / RPGGeek**, or sites built on their data.
 - **Descriptions, reviews and cover images** from sources that don't licence them. Releases carry
   facts (titles, codes, ISBNs, names, dates, page counts) plus links back to each source page.

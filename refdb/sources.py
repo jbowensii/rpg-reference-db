@@ -73,8 +73,8 @@ SOURCES = {s.id: s for s in [
            "https://wiki.travellerrpg.com/api.php", kind="traveller",
            owner="Traveller Wiki contributors", contact="https://wiki.travellerrpg.com/"),
     Source("rpgnet", "RPGnet Gaming Index (via the Wayback Machine)", "https://index.rpg.net/",
-           "(c) Dyvers Hands, all rights reserved", "RPGnet Gaming Index, index.rpg.net; Internet Archive",
-           False, "", kind="rpgnet",
+           "Used with permission (facts only), granted 2026-10-08", "RPGnet Gaming Index, index.rpg.net; Internet Archive",
+           True, "", kind="rpgnet",
            owner="RPGnet / Dyvers Hands", contact="https://www.rpg.net/"),
     # Crawled with scraper-stack: `api` = the job folder, `template` = the page parser.
     # Wayne granted permission 2026-10-08: facts only (title, year, author, pages, codes, ISBN), no blurbs.
@@ -85,9 +85,9 @@ SOURCES = {s.id: s for s in [
     Source("tsrarchive", "The TSR Archive", "http://www.tsrarchive.com/", "Used with permission (facts only), granted 2026-10-08",
            "The TSR Archive, tsrarchive.com", True, "tsrarchive", "tsrarchive", kind="crawl",
            owner="The TSR Archive", contact="http://www.tsrarchive.com/"),
-    # Private only: Le GRoG's legal page invokes EU database rights and forbids public reproduction.
+    # Le GRoG agreed 2026-10-08 (facts only) in return for a copy of the combined file.
     Source("legrog", "Le GRoG - Guide du Rôliste Galactique", "https://www.legrog.org/",
-           "(c) Le GRoG; EU database right, no public reproduction", "Le Guide du Rôliste Galactique, legrog.org",
-           False, "legrog", "grog", kind="crawl",
+           "Used with permission (facts only), granted 2026-10-08", "Le Guide du Rôliste Galactique, legrog.org",
+           True, "legrog", "grog", kind="crawl",
            owner="Le GRoG association and contributors", contact="https://www.legrog.org/"),
 ]}

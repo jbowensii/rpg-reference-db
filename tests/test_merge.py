@@ -11,7 +11,11 @@ def test_normalisers() -> None:
     assert set(norm_code("8415 (original) 967100000 (reissue)")) >= {"8415", "967100000"}
 
 
-def test_merge_links_by_isbn_code_and_title() -> None:
+def test_merge_links_by_isbn_code_and_title(monkeypatch) -> None:
+    import dataclasses
+    from refdb.sources import SOURCES
+    # every real source is public now; make one private to prove private data never leaves
+    monkeypatch.setitem(SOURCES, "rpgnet", dataclasses.replace(SOURCES["rpgnet"], publish=False))
     db = sqlite3.connect(":memory:")
     db.executescript(SCHEMA)
     rows = [
@@ -29,8 +33,7 @@ def test_merge_links_by_isbn_code_and_title() -> None:
     (p,) = db.execute("SELECT title, publisher, isbn13, sources FROM products WHERE sources LIKE '%wayne%'").fetchall()
     assert p[0] == "Slave Pits of the Undercity" and p[1] == "TSR" and p[2] == "9780935696257"
     assert set(p[3].split("; ")) == {"wikipedia", "waynesbooks", "rpgnet"}
-    # public merge leaves the private source (rpgnet) out entirely; Wayne's and the TSR Archive
-    # are public since 2026-10-08
+    # public merge leaves the private source (rpgnet here) out entirely
     assert merge(db, public=True) == 2
     srcs = {r[0] for r in db.execute("SELECT sources FROM public_products")}
     assert srcs == {"wikipedia; waynesbooks", "tsrarchive"} and not any("rpgnet" in s for s in srcs)
