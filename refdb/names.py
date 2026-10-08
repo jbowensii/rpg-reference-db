@@ -26,7 +26,8 @@ OVERRIDES: dict[str, str] = {}
 def key(name: str | None, keep_brackets: bool = False) -> str:
     """Matching key: lower case, '&' -> 'and', no punctuation, no legal endings, no leading article."""
     n = _ARTICLE.sub(" ", name or "").lower().replace("&", " and ")
-    if not keep_brackets:
+    if not keep_brackets:                                     # 'Black Library / BL Publishing (UK)':
+        n = n.split(" / ")[0]                                 # the imprint after ' / ' is not the name
         n = re.sub(r"\(([^)]*)\)", " ", n)
     n = re.sub(r"\b([a-z])\.(?=[a-z]\.)", r"\1", n)           # 't.s.r.' -> 'tsr.'
     n = re.sub(r"[^a-z0-9]+", " ", n)
@@ -64,13 +65,19 @@ def build(names: Counter, systems: bool = False) -> dict[str, tuple[str, int]]:
                 ak = key(a)
                 if len(ak) >= 3 and ak != k:
                     parent[find(ak)] = find(k)
+    if not systems:                  # 'White Wolf Publishing' joins 'White Wolf' when both are used
+        for k in list(parent):
+            m = re.fullmatch(r"(.{5,}?)(publishing|publications|games|press|books)", k)
+            if m and m.group(1) in parent:
+                parent[find(k)] = find(m.group(1))
     groups: dict[str, Counter] = defaultdict(Counter)
     for form, n in names.items():
         if kf(form):
             groups[find(kf(form))][form.strip()] += n
     out = {}
     for gid, (root, forms) in enumerate(sorted(groups.items()), 1):
-        best = OVERRIDES.get(root) or min(forms, key=lambda f: (-forms[f], len(f), f))
+        clean = [f for f in forms if not re.search(r" / |[()\[\];]", f)] or list(forms)
+        best = OVERRIDES.get(root) or min(clean, key=lambda f: (-forms[f], len(f), f))
         for form in forms:
             out[form] = (best, gid)
     return out

@@ -80,3 +80,19 @@ def test_standard_publisher_and_works() -> None:
     assert pub == "TSR" and set(variants.split("; ")) == {"TSR, Inc.", "T.S.R.", "TSR"}
     works = {r[0] for r in db.execute("SELECT work_id FROM products WHERE title = 'Darth Plagueis'")}
     assert len(works) == 1                    # ...but linked as one work
+
+
+def test_standard_name_is_clean() -> None:
+    from collections import Counter
+    from refdb.names import build
+    m = build(Counter({"Black Library / BL Publishing (UK)": 900, "Black Library / BL Publishing (US)": 300,
+                       "Black Library": 40, "The Black Library": 12}))
+    assert {v[0] for v in m.values()} == {"Black Library"} and len({v[1] for v in m.values()}) == 1
+
+
+def test_trailing_publishing_joins() -> None:
+    from collections import Counter
+    from refdb.names import build
+    m = build(Counter({"White Wolf Publishing": 50, "White Wolf": 90, "Pocket Books": 30, "Games Workshop": 9}))
+    assert m["White Wolf Publishing"][1] == m["White Wolf"][1] and m["White Wolf"][0] == "White Wolf"
+    assert m["Pocket Books"][0] == "Pocket Books" and m["Games Workshop"][0] == "Games Workshop"
