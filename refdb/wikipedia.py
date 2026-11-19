@@ -11,21 +11,39 @@ from .store import save, save_raw, save_source
 API = "https://en.wikipedia.org/w/api.php"
 
 PAGES = [
+    # D&D / TSR / Wizards of the Coast
     "List of Dungeons & Dragons modules", "List of Dungeons & Dragons rulebooks",
     "List of Dungeons & Dragons adventures", "List of Dungeons & Dragons fiction",
     "List of Forgotten Realms modules and sourcebooks", "List of Forgotten Realms novels",
     "List of Dragonlance modules and sourcebooks", "List of Dragonlance novels",
-    "List of Eberron modules and sourcebooks", "List of Dark Sun modules and sourcebooks",
-    "List of Shadowrun books", "List of GURPS books", "List of Traveller books", "List of BattleTech novels",
+    "List of Eberron modules and sourcebooks", "List of Eberron novels",
+    "List of Dark Sun modules and sourcebooks", "List of Dark Sun novels",
+    "List of Ravenloft publications",
+    # Other game systems
+    "List of Shadowrun books", "List of GURPS books", "List of Traveller books",
+    "List of Call of Cthulhu books", "List of RuneQuest supplements",
+    "List of Pathfinder books", "List of Starfinder books",
+    "List of Cyberpunk 2020 books", "List of Earthdawn books", "List of Paranoia books",
+    "List of Hero System products", "List of Savage Worlds books",
+    "List of Fading Suns books", "List of Exalted publications",
+    "List of Deadlands: The Weird West publications", "List of Deadlands: Hell on Earth publications",
+    "List of systemless fantasy role-playing game supplements",
+    # World of Darkness
     "List of Vampire: The Masquerade books", "List of Mage: The Ascension books",
     "List of Werewolf: The Apocalypse books", "List of Wraith: The Oblivion books",
     "List of Changeling: The Dreaming books", "List of Vampire: The Dark Ages books",
-    "List of Exalted publications", "List of Cyberpunk 2020 books",
-    "List of Fading Suns books", "List of RuneQuest supplements", "List of Marvel RPG supplements",
+    # Star Wars / licensed settings
     "List of Star Wars Roleplaying Game books", "List of D6 System books",
-    "List of Warhammer Fantasy Roleplay publications", "List of Warhammer 40,000 novels",
-    "List of Warhammer Fantasy novels", "List of Pathfinder books", "List of Dungeon Crawl Classics modules",
-    "List of Fighting Fantasy gamebooks", "List of Lone Wolf media", "List of Call of Cthulhu books",
+    "List of Marvel RPG supplements",
+    # Wargame-adjacent with RPG products
+    "List of Warhammer Fantasy Roleplay publications",
+    "List of Warhammer 40,000 novels", "List of Warhammer 40,000 publications",
+    "List of Warhammer Fantasy novels", "List of Warhammer Army Books and Supplements",
+    # Fiction and gamebooks
+    "List of BattleTech novels", "List of Dungeon Crawl Classics modules",
+    "List of Fighting Fantasy gamebooks", "List of Lone Wolf media",
+    # Cross-system references
+    "List of campaign settings", "List of tabletop role-playing games",
 ]
 
 # Header text (lower case, punctuation squeezed) -> our column. Order matters: first match wins.
